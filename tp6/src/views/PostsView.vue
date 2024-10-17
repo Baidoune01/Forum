@@ -23,9 +23,23 @@
         <div v-if="auth.currentUser?.uid === post.authorId" class="mb-4">
           <b-button
             size="sm"
-            @click="editPost(post.id)"
+            @click="openEditForm(post)"
             class="bg-yellow-400 hover:bg-yellow-500 text-white py-1 px-3 rounded"
           >Edit Post</b-button>
+        </div>
+
+        <!-- Edit Post Form (only visible when editing a post) -->
+        <div v-if="editingPost && editingPost.id === post.id" class="mt-4">
+          <b-form @submit.prevent="submitEditPost(post.id)">
+            <b-form-group label="Title">
+              <b-form-input v-model="editTitle" required></b-form-input>
+            </b-form-group>
+            <b-form-group label="Content">
+              <b-form-textarea v-model="editContent" required></b-form-textarea>
+            </b-form-group>
+            <b-button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Save Changes</b-button>
+            <b-button @click="cancelEdit" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 ml-2 rounded">Cancel</b-button>
+          </b-form>
         </div>
 
         <!-- Display comments -->
@@ -67,28 +81,55 @@
 import { ref, onMounted } from 'vue';
 import { db, auth } from '@/firebase/init'; 
 import { collection, getDocs, doc, updateDoc, arrayUnion, query, orderBy } from 'firebase/firestore'; 
-import { useRouter } from 'vue-router'; // Import useRouter for navigation
+import { useRouter } from 'vue-router';
 
 export default {
   setup() {
-    const router = useRouter(); // Initialize the router instance
+    const router = useRouter();
     const posts = ref([]);
-    const commentTexts = ref({}); // Object to store comment text per post ID
+    const commentTexts = ref({});
+    const editingPost = ref(null); // Track which post is being edited
+    const editTitle = ref('');
+    const editContent = ref('');
 
     // Fetch posts and ensure comments array is initialized
     const fetchPosts = async () => {
       try {
-        // Query to order posts by 'createdAt' in descending order
         const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
-        
         posts.value = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          comments: doc.data().comments || [], 
+          comments: doc.data().comments || [],
         }));
       } catch (error) {
         console.error('Error fetching posts:', error);
+      }
+    };
+
+    const openEditForm = (post) => {
+      editingPost.value = post;
+      editTitle.value = post.title;
+      editContent.value = post.content;
+    };
+
+    const cancelEdit = () => {
+      editingPost.value = null;
+      editTitle.value = '';
+      editContent.value = '';
+    };
+
+    const submitEditPost = async (postId) => {
+      try {
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+          title: editTitle.value,
+          content: editContent.value,
+        });
+        await fetchPosts(); // Refresh posts after edit
+        cancelEdit(); // Reset form after successful edit
+      } catch (error) {
+        console.error('Error updating post:', error);
       }
     };
 
@@ -99,7 +140,7 @@ export default {
       }
 
       const commentData = {
-        text: commentTexts.value[postId], 
+        text: commentTexts.value[postId],
         authorId: auth.currentUser.uid,
         authorName: auth.currentUser.email,
         createdAt: new Date(),
@@ -119,16 +160,22 @@ export default {
     };
 
     const goToAddPost = () => {
-      router.push('/add-post'); // Navigate to the add post page
+      router.push('/add-post');
     };
 
     onMounted(fetchPosts);
 
     return {
       posts,
-      commentTexts, 
+      commentTexts,
       addComment,
-      goToAddPost, // Add function to return
+      goToAddPost,
+      openEditForm,
+      cancelEdit,
+      submitEditPost,
+      editTitle,
+      editContent,
+      editingPost,
       auth,
     };
   },
