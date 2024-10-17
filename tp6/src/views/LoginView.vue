@@ -1,81 +1,56 @@
 <template>
-  <div class="login">
-    <h2>Login</h2>
-    <form @submit.prevent="login">
-      <div>
-        <label for="email">Email:</label>
-        <input type="email" id="email" v-model="email" required>
-      </div>
-      <div>
-        <label for="password">Password:</label>
-        <input type="password" id="password" v-model="password" required>
-      </div>
-      <button type="submit">Login</button>
-    </form>
+  <div class="login-container">
+    <h1>Login</h1>
+    <b-form @submit.prevent="loginUser">
+      <b-form-group label="Email:" label-for="email-input">
+        <b-form-input
+          id="email-input"
+          type="email"
+          v-model="email"
+          required
+          placeholder="Enter email"
+        />
+      </b-form-group>
+      <b-form-group label="Password:" label-for="password-input">
+        <b-form-input
+          id="password-input"
+          type="password"
+          v-model="password"
+          required
+          placeholder="Enter password"
+        />
+      </b-form-group>
+      <b-button type="submit" variant="primary">Login</b-button>
+    </b-form>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue'
-import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue';
+import { auth } from '@/firebase/init';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import router from '@/router';
 
 export default {
-  name: 'LoginView',
   setup() {
-    const store = useStore()
-    const router = useRouter()
-    const email = ref('')
-    const password = ref('')
+    const email = ref('');
+    const password = ref('');
 
-    const login = async () => {
+    const loginUser = async () => {
       try {
-        await store.dispatch('login', { email: email.value, password: password.value })
-        
-        // Redirect to the Post List page after successful login
-        router.push('/posts')
+        const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
+        console.log('Logged in:', userCredential.user);
+        router.push('/posts'); // Redirect to home or posts page
       } catch (error) {
-        console.error('Login failed:', error)
-        alert('Login failed. Please try again.')
+        console.error('Login error:', error.message);
       }
-    }
+    };
 
     return {
       email,
       password,
-      login
-    }
+      loginUser
+    };
   }
-}
+};
 </script>
-
-<style scoped>
-.login {
-  max-width: 300px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-form div {
-  margin-bottom: 10px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-input {
-  width: 100%;
-  padding: 5px;
-}
-
-button {
-  width: 100%;
-  padding: 10px;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-</style>

@@ -1,107 +1,85 @@
 <template>
-  <div class="add-post">
-    <h2>Add New Post</h2>
-    <form @submit.prevent="submitPost">
-      <div class="form-group">
-        <label for="title">Title:</label>
-        <input type="text" id="title" v-model="title" required />
-      </div>
+  <div class="add-post-container">
+    <h1>Add a New Post</h1>
+    <b-form @submit.prevent="submitPost">
+      <b-form-group label="Title:" label-for="post-title">
+        <b-form-input
+          id="post-title"
+          v-model="title"
+          required
+          placeholder="Enter post title"
+        ></b-form-input>
+      </b-form-group>
+      <b-form-group label="Content:" label-for="post-content">
+        <b-form-textarea
+          id="post-content"
+          v-model="content"
+          required
+          placeholder="What's on your mind?"
+          rows="4"
+        ></b-form-textarea>
+      </b-form-group>
+      <b-button type="submit" variant="primary" :disabled="loading">Submit Post</b-button>
+    </b-form>
 
-      <div class="form-group">
-        <label for="content">Content:</label>
-        <textarea id="content" v-model="content" required></textarea>
-      </div>
-
-      <button type="submit">Submit Post</button>
-    </form>
+    <!-- Display error message if any -->
+    <div v-if="error" class="alert alert-danger">
+      {{ error }}
+    </div>
   </div>
 </template>
 
 <script>
 import { ref } from 'vue';
-import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
+import { db, auth } from '@/firebase/init';
+import { collection, addDoc } from 'firebase/firestore';
+import router from '@/router';
 
 export default {
-  name: 'AddPostView',
   setup() {
     const title = ref('');
     const content = ref('');
-    const store = useStore();
-    const router = useRouter();
+    const loading = ref(false);
+    const error = ref(null);
 
     const submitPost = async () => {
-      if (title.value && content.value) {
-        // Dispatch the addPost action to Vuex to add the post
-        await store.dispatch('addPost', {
-          title: title.value,
-          content: content.value
-        });
+  if (!auth.currentUser) {
+    alert("You must be logged in to submit a post.");
+    return;
+  }
 
-        // Redirect to the posts page after successful submission
-        router.push('/posts');
-      } else {
-        alert('Please fill in both the title and content.');
-      }
-    };
+  const postData = {
+    title: title.value,
+    content: content.value,
+    authorId: auth.currentUser.uid,
+    authorName: auth.currentUser.email, // or displayName if available
+    createdAt: new Date(),
+    comments: []
+  };
+
+  try {
+    // Add post to Firestore's shared "posts" collection
+    addDoc(collection(db, "posts"), postData);
+    router.push('/posts'); // Redirect to posts page
+  } catch (error) {
+    console.error("Error adding post:", error);
+  }
+};
+
 
     return {
       title,
       content,
-      submitPost
+      submitPost,
+      loading,
+      error
     };
   }
 };
 </script>
 
 <style scoped>
-.add-post {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-input,
-textarea {
-  width: 100%;
-  padding: 8px;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-}
-
-textarea {
-  height: 150px;
-}
-
-button {
-  width: 100%;
-  padding: 10px;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-button:hover {
-  background-color: #36a373;
+.add-post-container {
+  margin: 20px;
 }
 </style>

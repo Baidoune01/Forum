@@ -2,6 +2,7 @@ import { createStore } from 'vuex';
 import { auth, db } from '@/firebase/init';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, getDocs, addDoc, query, orderBy } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default createStore({
     state: {
@@ -20,6 +21,16 @@ export default createStore({
         },
     },
     actions: {
+        async fetchUser({ commit }) {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    commit('SET_USER', user); // Set user in Vuex store
+                } else {
+                    commit('SET_USER', null); // Clear user from Vuex store when logged out
+                }
+            });
+        },
+
         // Login action
         async login({ commit }, { email, password }) {
             try {

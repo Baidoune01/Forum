@@ -10,10 +10,11 @@ import BootstrapVue3 from 'bootstrap-vue-3'
 // Create the app
 const app = createApp(App)
 
-// Use plugins
-app.use(router)
-app.use(store)
-app.use(BootstrapVue3)
-
-// Mount the app
-app.mount('#app')
+// Fetch the authenticated user when the app starts
+store.dispatch('fetchUser').then(() => {
+    // Use plugins and mount app only after fetching the user
+    app.use(router)
+    app.use(store)
+    app.use(BootstrapVue3)
+    app.mount('#app')
+});

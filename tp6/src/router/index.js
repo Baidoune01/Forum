@@ -3,8 +3,9 @@ import HomeView from '../views/HomeView.vue'
 import AboutView from '../views/AboutView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-import PostListView from '../views/PostListView.vue' // Import the PostListView component
-import AddPostView from '../views/AddPostView.vue'; // Import the AddPostView component
+import PostsView from '../views/PostsView.vue';
+import AddPostView from '../views/AddPostView.vue';
+import ProfileView from '../views/ProfileView.vue';
 
 const routes = [{
         path: '/',
@@ -27,14 +28,18 @@ const routes = [{
         component: RegisterView
     },
     {
-        path: '/posts',
-        name: 'posts',
-        component: PostListView
-    },
-    {
         path: '/add-post', // Add the route for adding posts
         name: 'addPost',
         component: AddPostView
+    },
+    {
+        path: '/posts',
+        component: PostsView
+    },
+    {
+        path: '/profile',
+        name: 'Profile',
+        component: ProfileView, // User profile page
     }
 ];
 
