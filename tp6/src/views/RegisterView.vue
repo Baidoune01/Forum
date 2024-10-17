@@ -38,9 +38,9 @@ export default {
 
     const registerUser = async () => {
       try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
+        const userCredential = createUserWithEmailAndPassword(auth, email.value, password.value);
         console.log('Registered:', userCredential.user);
-        router.push('/home'); // Redirect to home or posts page
+        router.push('/posts'); // Redirect to home or posts page
       } catch (error) {
         console.error('Registration error:', error.message);
       }
