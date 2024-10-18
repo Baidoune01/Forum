@@ -1,147 +1,158 @@
 <template>
   <div id="app">
     <!-- Navbar -->
-    <nav class="bg-white shadow-lg py-4 fixed top-0 left-0 right-0 z-50">
-      <div class="container mx-auto flex justify-between items-center px-4 md:px-8 lg:px-16">
-        <!-- Forum Title on the left side -->
-        <router-link class="text-2xl font-extrabold text-indigo-600 tracking-wide hover:text-indigo-800 transition duration-300" to="/">
-          Forum Communautaire
-        </router-link>
+    <nav class="bg-indigo-600 text-white py-4 fixed top-0 left-0 right-0 z-50 shadow-lg h-20">
+      <div class="container mx-auto flex justify-between items-center h-full px-4 md:px-8 lg:px-16">
+        <!-- Left: Logo or Brand Name -->
+        <div class="flex items-center">
+          <router-link to="/" class="text-2xl font-semibold hover:text-gray-200">MyForum</router-link>
+        </div>
 
-        <!-- Navigation Links on the right side -->
-        <div class="flex items-center space-x-6">
-          <!-- Show Login/Register if not logged in -->
+        <!-- Center: Links when logged out -->
+        <div v-if="!isLoggedIn" class="flex items-center space-x-10 h-full">
           <router-link
-            v-if="!isLoggedIn"
-            class="text-gray-600 font-medium hover:text-indigo-600 transition duration-300"
+            class="text-white text-lg font-medium hover:text-gray-300 transition duration-300"
             to="/login"
           >
             Login
           </router-link>
           <router-link
-            v-if="!isLoggedIn"
-            class="text-gray-600 font-medium hover:text-indigo-600 transition duration-300"
+            class="text-white text-lg font-medium hover:text-gray-300 transition duration-300"
             to="/register"
           >
             Register
           </router-link>
+          <router-link
+            class="text-white text-lg font-medium hover:text-gray-300 transition duration-300"
+            to="/about"
+          >
+            About
+          </router-link>
+        </div>
 
-          <!-- Show Profile Dropdown if logged in -->
-          <div v-if="isLoggedIn" class="relative">
-            <!-- User Icon Button -->
-            <button class="flex items-center text-gray-600 hover:text-indigo-600 transition duration-300" @click="toggleProfileMenu">
-              <img
-                src="https://www.gravatar.com/avatar?d=mp"
-                alt="User avatar"
-                class="w-10 h-10 rounded-full border border-gray-300 shadow-sm"
-              >
-              <!-- Add a downward arrow for the profile dropdown -->
-              <svg
-                v-if="!showProfileMenu"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                class="w-5 h-5 ml-2 text-gray-500"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-              <svg
-                v-if="showProfileMenu"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                class="w-5 h-5 ml-2 text-gray-500"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-              </svg>
+        <!-- Right: Profile, Notifications, Dots menu when logged in -->
+        <div v-else class="flex items-center space-x-10">
+          <div class="flex items-center space-x-6">
+            <!-- Profile Icon -->
+            <router-link to="/profile">
+              <img src="https://www.gravatar.com/avatar?d=mp" alt="User avatar" class="w-12 h-12 rounded-full shadow-sm cursor-pointer">
+            </router-link>
+
+            <!-- Notifications -->
+            <router-link to="/notifications" class="relative">
+              <i class="fas fa-bell text-2xl"></i>
+              <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs h-3 w-3 rounded-full"></span>
+            </router-link>
+          </div>
+
+          <!-- Dots Menu -->
+          <div class="relative flex items-center space-x-4">
+            <button @click="toggleMenu" ref="menuButton" class="focus:outline-none">
+              <i class="fas fa-ellipsis-v text-2xl"></i>
             </button>
-
-            <!-- Dropdown Menu -->
-            <div
-              v-if="showProfileMenu"
-              class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10"
-            >
-              <button
-                class="block w-full text-left px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 transition duration-200"
-                @click="viewProfile"
-              >
-                View Profile
-              </button>
-              <button
-                class="block w-full text-left px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 transition duration-200"
-                @click="logout"
-              >
-                Logout
-              </button>
-            </div>
+            <transition name="fade">
+              <div v-if="showMenu" class="absolute top-full right-0 mt-2 w-48 bg-white text-gray-800 border border-gray-200 rounded-lg shadow-lg z-50" ref="dropdownMenu">
+                <router-link to="/posts" class="block px-4 py-2 hover:bg-gray-100">Home</router-link>
+                <router-link to="/profile" class="block px-4 py-2 hover:bg-gray-100">View Profile</router-link>
+                <router-link to="/about" class="block px-4 py-2 hover:bg-gray-100">About</router-link>
+                <button @click="logout" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Logout</button>
+              </div>
+            </transition>
           </div>
         </div>
       </div>
     </nav>
 
     <!-- Modal for login/register choice -->
-    <div v-if="showModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
+    <div v-if="showModal && !isLoggedIn" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
       <div class="bg-white p-8 rounded-lg shadow-lg w-96">
         <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Welcome to the Forum!</h2>
         <p class="text-center text-gray-600 mb-6">Would you like to register, log in, or continue as a guest?</p>
         <div class="flex justify-between">
-          <router-link to="/login" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Login</router-link>
-          <router-link to="/register" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Register</router-link>
+          <router-link to="/login" @click="handleModalClose" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Login</router-link>
+          <router-link to="/register" @click="handleModalClose" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Register</router-link>
           <button @click="continueAsGuest" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Continue as Guest</button>
         </div>
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="pt-24">
+    <!-- Main Content with dynamic padding to account for navbar height -->
+    <div class="flex-grow">
       <router-view></router-view>
     </div>
   </div>
 </template>
 
 <script>
-import { computed, ref } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 export default {
   setup() {
     const store = useStore();
     const router = useRouter();
-    const showProfileMenu = ref(false);
-    const showModal = ref(true); // Modal visibility state
-
+    const route = useRoute();
     const isLoggedIn = computed(() => store.getters.isLoggedIn);
+    const showMenu = ref(false);
+    const menuButton = ref(null);
+    const dropdownMenu = ref(null);
+    const showModal = ref(false);
 
-    const toggleProfileMenu = () => {
-      showProfileMenu.value = !showProfileMenu.value;
+    const toggleMenu = () => {
+      showMenu.value = !showMenu.value;
     };
 
-    const viewProfile = () => {
-      router.push('/profile');
-      showProfileMenu.value = false;
+    const closeMenu = (event) => {
+      if (showMenu.value && dropdownMenu.value && !dropdownMenu.value.contains(event.target) && !menuButton.value.contains(event.target)) {
+        showMenu.value = false;
+      }
     };
 
     const logout = async () => {
       await store.dispatch('logout');
+      localStorage.removeItem('modalShown'); // Reset modal for guest mode
+      localStorage.removeItem('guestMode'); // Reset guest mode
       router.push('/');
-      showProfileMenu.value = false;
+      showMenu.value = false;
+      showModal.value = true; // Show modal after logout
+    };
+
+    const handleModalClose = () => {
+      showModal.value = false;
+      localStorage.setItem('modalShown', 'true');
     };
 
     const continueAsGuest = () => {
-      showModal.value = false; // Close the modal and proceed to posts
+      showModal.value = false;
+      localStorage.setItem('guestMode', 'true'); // Modal reappears for guest on refresh
       router.push('/posts');
     };
 
+    // Check the modal state and user status on mounted
+    onMounted(() => {
+      // Modal should appear when not logged in and on the home page
+      if (!localStorage.getItem('guestMode') && !isLoggedIn.value && route.path === '/') {
+        showModal.value = true;
+      }
+
+      // Modal should not appear when logged in
+      if (isLoggedIn.value) {
+        showModal.value = false;
+      }
+    });
+
+    onBeforeUnmount(() => {
+      document.removeEventListener('click', closeMenu);
+    });
+
     return {
       isLoggedIn,
-      showProfileMenu,
-      toggleProfileMenu,
-      viewProfile,
+      showMenu,
+      toggleMenu,
       logout,
       showModal,
+      handleModalClose,
       continueAsGuest,
     };
   },
@@ -149,27 +160,40 @@ export default {
 </script>
 
 <style scoped>
-/* Custom styling for the modal */
-.dropdown-menu {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 0.5rem;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  min-width: 12rem;
+/* Ensure navbar height is consistent in both states */
+nav {
+  height: 80px;
 }
 
-.dropdown-item {
-  padding: 0.5rem 1rem;
-  color: #555;
-  transition: background-color 0.2s ease;
+.flex-grow {
+  flex-grow: 1;
 }
 
-.dropdown-item:hover {
-  background-color: #f7f7f7;
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s ease-in-out;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 
-.dropdown-menu.show {
-  display: block;
+/* Global overflow handling */
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.flex-grow {
+  flex-grow: 1;
 }
 </style>

@@ -1,10 +1,12 @@
 <template>
-  <div class="max-w-4xl mx-auto py-10 px-5">
+  <div class="max-w-4xl mx-auto py-10 px-5 pt-32 overflow-auto">
     <h1 class="text-4xl font-bold text-gray-800 mb-10 text-center">Community Forum</h1>
 
     <!-- Button to add a post (only if logged in) -->
     <div v-if="auth.currentUser" class="text-center mb-6">
-      <b-button @click="goToAddPost" variant="primary" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Want to post something?</b-button>
+      <button @click="goToAddPost" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md">
+        Want to post something?
+      </button>
     </div>
 
     <!-- Loop through posts (everyone can see posts) -->
@@ -21,15 +23,47 @@
 
         <!-- Display Edit Post button (only for post author) -->
         <div v-if="auth.currentUser?.uid === post.authorId" class="mb-4">
-          <b-button
-            size="sm"
-            @click="editPost(post.id)"
-            class="bg-yellow-400 hover:bg-yellow-500 text-white py-1 px-3 rounded"
-          >Edit Post</b-button>
+          <button
+            @click="openEditForm(post)"
+            class="bg-yellow-400 hover:bg-yellow-500 text-white py-1 px-3 rounded-md"
+          >
+            Edit Post
+          </button>
+        </div>
+
+        <!-- Edit Post Form (only visible when editing a post) -->
+        <div v-if="editingPost && editingPost.id === post.id" class="mt-4">
+          <form @submit.prevent="submitEditPost(post.id)" class="space-y-4">
+            <div>
+              <label class="block text-gray-700">Title:</label>
+              <input
+                type="text"
+                v-model="editTitle"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-700">Content:</label>
+              <textarea
+                v-model="editContent"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              ></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+              <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md">
+                Save Changes
+              </button>
+              <button @click="cancelEdit" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md">
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
 
         <!-- Display comments -->
-        <div v-if="post.comments && post.comments.length" class="space-y-4">
+        <div v-if="post.comments && post.comments.length" class="space-y-4 mt-4">
           <h4 class="font-semibold text-lg text-gray-800">Comments</h4>
           <div v-for="comment in post.comments" :key="comment.id" class="bg-gray-100 p-4 rounded-lg">
             <p class="text-gray-700">{{ comment.text }}</p>
@@ -37,18 +71,20 @@
           </div>
         </div>
 
-        <!-- Comment section (each post has its own comment input, only if logged in) -->
+        <!-- Comment section (only if logged in) -->
         <div v-if="auth.currentUser" class="mt-6">
           <h4 class="font-semibold text-gray-800">Add a Comment</h4>
-          <b-form @submit.prevent="addComment(post.id)" class="mt-4 space-y-3">
-            <b-form-input
+          <form @submit.prevent="addComment(post.id)" class="space-y-3">
+            <input
               v-model="commentTexts[post.id]"
               placeholder="Write your comment here..."
-              required
               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            ></b-form-input>
-            <b-button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Comment</b-button>
-          </b-form>
+              required
+            />
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md">
+              Comment
+            </button>
+          </form>
         </div>
         <div v-else class="text-gray-500 mt-4">
           <p class="text-sm">Please log in to comment.</p>
@@ -67,28 +103,55 @@
 import { ref, onMounted } from 'vue';
 import { db, auth } from '@/firebase/init'; 
 import { collection, getDocs, doc, updateDoc, arrayUnion, query, orderBy } from 'firebase/firestore'; 
-import { useRouter } from 'vue-router'; // Import useRouter for navigation
+import { useRouter } from 'vue-router';
 
 export default {
   setup() {
-    const router = useRouter(); // Initialize the router instance
+    const router = useRouter();
     const posts = ref([]);
-    const commentTexts = ref({}); // Object to store comment text per post ID
+    const commentTexts = ref({});
+    const editingPost = ref(null); // Track which post is being edited
+    const editTitle = ref('');
+    const editContent = ref('');
 
     // Fetch posts and ensure comments array is initialized
     const fetchPosts = async () => {
       try {
-        // Query to order posts by 'createdAt' in descending order
         const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
-        
         posts.value = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          comments: doc.data().comments || [], 
+          comments: doc.data().comments || [],
         }));
       } catch (error) {
         console.error('Error fetching posts:', error);
+      }
+    };
+
+    const openEditForm = (post) => {
+      editingPost.value = post;
+      editTitle.value = post.title;
+      editContent.value = post.content;
+    };
+
+    const cancelEdit = () => {
+      editingPost.value = null;
+      editTitle.value = '';
+      editContent.value = '';
+    };
+
+    const submitEditPost = async (postId) => {
+      try {
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+          title: editTitle.value,
+          content: editContent.value,
+        });
+        await fetchPosts(); // Refresh posts after edit
+        cancelEdit(); // Reset form after successful edit
+      } catch (error) {
+        console.error('Error updating post:', error);
       }
     };
 
@@ -99,7 +162,7 @@ export default {
       }
 
       const commentData = {
-        text: commentTexts.value[postId], 
+        text: commentTexts.value[postId],
         authorId: auth.currentUser.uid,
         authorName: auth.currentUser.email,
         createdAt: new Date(),
@@ -119,18 +182,25 @@ export default {
     };
 
     const goToAddPost = () => {
-      router.push('/add-post'); // Navigate to the add post page
+      router.push('/add-post');
     };
 
     onMounted(fetchPosts);
 
     return {
       posts,
-      commentTexts, 
+      commentTexts,
       addComment,
-      goToAddPost, // Add function to return
+      goToAddPost,
+      openEditForm,
+      cancelEdit,
+      submitEditPost,
+      editTitle,
+      editContent,
+      editingPost,
       auth,
     };
   },
 };
 </script>
+
