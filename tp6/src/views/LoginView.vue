@@ -1,40 +1,52 @@
 <template>
-  <div class="login-container">
-    <h1>Login</h1>
-    <b-form @submit.prevent="loginUser">
-      <!-- Email Field with Error Message -->
-      <b-form-group label="Email:" label-for="email-input">
-        <b-form-input
-          id="email-input"
-          type="email"
-          v-model="email"
-          required
-          placeholder="Enter email"
-          :state="emailError === '' ? null : false"
-        />
-        <b-form-invalid-feedback v-if="emailError">{{ emailError }}</b-form-invalid-feedback>
-      </b-form-group>
+  <div class="h-screen flex items-center justify-center bg-gray-100 overflow-hidden">
+    <div class="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
+      <h1 class="text-2xl font-bold text-gray-800 text-center mb-6">Login</h1>
 
-      <!-- Password Field with Error Message -->
-      <b-form-group label="Password:" label-for="password-input">
-        <b-form-input
-          id="password-input"
-          type="password"
-          v-model="password"
-          required
-          placeholder="Enter password"
-          :state="passwordError === '' ? null : false"
-        />
-        <b-form-invalid-feedback v-if="passwordError">{{ passwordError }}</b-form-invalid-feedback>
-      </b-form-group>
+      <!-- Login Form -->
+      <form @submit.prevent="loginUser" class="space-y-4">
+        <!-- Email Field with Error Message -->
+        <div>
+          <label for="email-input" class="block text-gray-700 font-semibold mb-2">Email:</label>
+          <input
+            id="email-input"
+            type="email"
+            v-model="email"
+            placeholder="Enter email"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+          <p v-if="emailError" class="text-red-500 text-sm mt-1">{{ emailError }}</p>
+        </div>
 
-      <!-- Login Error (e.g., Firebase errors) -->
-      <div v-if="loginError" class="text-danger">
-        {{ loginError }}
-      </div>
+        <!-- Password Field with Error Message -->
+        <div>
+          <label for="password-input" class="block text-gray-700 font-semibold mb-2">Password:</label>
+          <input
+            id="password-input"
+            type="password"
+            v-model="password"
+            placeholder="Enter password"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+          <p v-if="passwordError" class="text-red-500 text-sm mt-1">{{ passwordError }}</p>
+        </div>
 
-      <b-button type="submit" variant="primary">Login</b-button>
-    </b-form>
+        <!-- Login Error -->
+        <div v-if="loginError" class="text-red-500 text-sm text-center">
+          {{ loginError }}
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-200"
+        >
+          Login
+        </button>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -52,7 +64,6 @@ export default {
     const passwordError = ref('');
     const loginError = ref('');
 
-    // Helper functions to validate email and password
     const validateEmail = (email) => {
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailPattern.test(email);
@@ -63,7 +74,6 @@ export default {
       passwordError.value = '';
       loginError.value = '';
 
-      // Validate email format
       if (!validateEmail(email.value)) {
         emailError.value = 'Please enter a valid email.';
         return;
@@ -76,9 +86,8 @@ export default {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
         console.log('Logged in:', userCredential.user);
-        router.push('/posts'); // Redirect to home or posts page
+        router.push('/posts'); // Redirect to posts page after login
       } catch (error) {
-        // Handle Firebase-specific errors (e.g., incorrect password)
         loginError.value = error.message;
       }
     };
@@ -89,16 +98,8 @@ export default {
       emailError,
       passwordError,
       loginError,
-      loginUser
+      loginUser,
     };
-  }
+  },
 };
 </script>
-
-<style scoped>
-/* Add some custom styles if needed */
-.login-container {
-  max-width: 400px;
-  margin: 0 auto;
-}
-</style>

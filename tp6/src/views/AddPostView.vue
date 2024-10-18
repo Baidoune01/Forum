@@ -1,29 +1,49 @@
 <template>
-  <div class="add-post-container">
-    <h1>Add a New Post</h1>
-    <b-form @submit.prevent="submitPost">
-      <b-form-group label="Title:" label-for="post-title">
-        <b-form-input
+  <div class="max-w-2xl mx-auto py-10 px-5 bg-white shadow-md rounded-lg pt-32">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Add a New Post</h1>
+    
+    <!-- Post Form -->
+    <form @submit.prevent="submitPost" class="space-y-6">
+      <!-- Title Field -->
+      <div>
+        <label for="post-title" class="block text-gray-700 font-semibold mb-2">Title:</label>
+        <input
           id="post-title"
           v-model="title"
-          required
+          type="text"
           placeholder="Enter post title"
-        ></b-form-input>
-      </b-form-group>
-      <b-form-group label="Content:" label-for="post-content">
-        <b-form-textarea
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+      
+      <!-- Content Field -->
+      <div>
+        <label for="post-content" class="block text-gray-700 font-semibold mb-2">Content:</label>
+        <textarea
           id="post-content"
           v-model="content"
-          required
-          placeholder="What's on your mind?"
           rows="4"
-        ></b-form-textarea>
-      </b-form-group>
-      <b-button type="submit" variant="primary" :disabled="loading">Submit Post</b-button>
-    </b-form>
+          placeholder="What's on your mind?"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        ></textarea>
+      </div>
+      
+      <!-- Submit Button -->
+      <div class="text-center">
+        <button
+          type="submit"
+          :disabled="loading"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md disabled:opacity-50"
+        >
+          {{ loading ? 'Submitting...' : 'Submit Post' }}
+        </button>
+      </div>
+    </form>
 
     <!-- Display error message if any -->
-    <div v-if="error" class="alert alert-danger">
+    <div v-if="error" class="mt-4 text-center text-red-500">
       {{ error }}
     </div>
   </div>
@@ -43,29 +63,32 @@ export default {
     const error = ref(null);
 
     const submitPost = async () => {
-  if (!auth.currentUser) {
-    alert("You must be logged in to submit a post.");
-    return;
-  }
+      if (!auth.currentUser) {
+        alert("You must be logged in to submit a post.");
+        return;
+      }
 
-  const postData = {
-    title: title.value,
-    content: content.value,
-    authorId: auth.currentUser.uid,
-    authorName: auth.currentUser.email, // or displayName if available
-    createdAt: new Date(),
-    comments: []
-  };
+      const postData = {
+        title: title.value,
+        content: content.value,
+        authorId: auth.currentUser.uid,
+        authorName: auth.currentUser.email,
+        createdAt: new Date(),
+        comments: []
+      };
 
-  try {
-    // Add post to Firestore's shared "posts" collection
-    addDoc(collection(db, "posts"), postData);
-    router.push('/posts'); // Redirect to posts page
-  } catch (error) {
-    console.error("Error adding post:", error);
-  }
-};
-
+      try {
+        loading.value = true;
+        // Add post to Firestore's "posts" collection
+        await addDoc(collection(db, "posts"), postData);
+        router.push('/posts'); // Redirect to posts page
+      } catch (err) {
+        console.error("Error adding post:", err);
+        error.value = "There was an error submitting your post. Please try again.";
+      } finally {
+        loading.value = false;
+      }
+    };
 
     return {
       title,
@@ -77,9 +100,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-.add-post-container {
-  margin: 20px;
-}
-</style>

@@ -1,10 +1,12 @@
 <template>
-  <div class="max-w-4xl mx-auto py-10 px-5">
+  <div class="max-w-4xl mx-auto py-10 px-5 pt-32 overflow-auto">
     <h1 class="text-4xl font-bold text-gray-800 mb-10 text-center">Community Forum</h1>
 
     <!-- Button to add a post (only if logged in) -->
     <div v-if="auth.currentUser" class="text-center mb-6">
-      <b-button @click="goToAddPost" variant="primary" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Want to post something?</b-button>
+      <button @click="goToAddPost" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md">
+        Want to post something?
+      </button>
     </div>
 
     <!-- Loop through posts (everyone can see posts) -->
@@ -21,29 +23,47 @@
 
         <!-- Display Edit Post button (only for post author) -->
         <div v-if="auth.currentUser?.uid === post.authorId" class="mb-4">
-          <b-button
-            size="sm"
+          <button
             @click="openEditForm(post)"
-            class="bg-yellow-400 hover:bg-yellow-500 text-white py-1 px-3 rounded"
-          >Edit Post</b-button>
+            class="bg-yellow-400 hover:bg-yellow-500 text-white py-1 px-3 rounded-md"
+          >
+            Edit Post
+          </button>
         </div>
 
         <!-- Edit Post Form (only visible when editing a post) -->
         <div v-if="editingPost && editingPost.id === post.id" class="mt-4">
-          <b-form @submit.prevent="submitEditPost(post.id)">
-            <b-form-group label="Title">
-              <b-form-input v-model="editTitle" required></b-form-input>
-            </b-form-group>
-            <b-form-group label="Content">
-              <b-form-textarea v-model="editContent" required></b-form-textarea>
-            </b-form-group>
-            <b-button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Save Changes</b-button>
-            <b-button @click="cancelEdit" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 ml-2 rounded">Cancel</b-button>
-          </b-form>
+          <form @submit.prevent="submitEditPost(post.id)" class="space-y-4">
+            <div>
+              <label class="block text-gray-700">Title:</label>
+              <input
+                type="text"
+                v-model="editTitle"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-700">Content:</label>
+              <textarea
+                v-model="editContent"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              ></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+              <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md">
+                Save Changes
+              </button>
+              <button @click="cancelEdit" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md">
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
 
         <!-- Display comments -->
-        <div v-if="post.comments && post.comments.length" class="space-y-4">
+        <div v-if="post.comments && post.comments.length" class="space-y-4 mt-4">
           <h4 class="font-semibold text-lg text-gray-800">Comments</h4>
           <div v-for="comment in post.comments" :key="comment.id" class="bg-gray-100 p-4 rounded-lg">
             <p class="text-gray-700">{{ comment.text }}</p>
@@ -51,18 +71,20 @@
           </div>
         </div>
 
-        <!-- Comment section (each post has its own comment input, only if logged in) -->
+        <!-- Comment section (only if logged in) -->
         <div v-if="auth.currentUser" class="mt-6">
           <h4 class="font-semibold text-gray-800">Add a Comment</h4>
-          <b-form @submit.prevent="addComment(post.id)" class="mt-4 space-y-3">
-            <b-form-input
+          <form @submit.prevent="addComment(post.id)" class="space-y-3">
+            <input
               v-model="commentTexts[post.id]"
               placeholder="Write your comment here..."
-              required
               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            ></b-form-input>
-            <b-button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Comment</b-button>
-          </b-form>
+              required
+            />
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md">
+              Comment
+            </button>
+          </form>
         </div>
         <div v-else class="text-gray-500 mt-4">
           <p class="text-sm">Please log in to comment.</p>
@@ -181,3 +203,4 @@ export default {
   },
 };
 </script>
+

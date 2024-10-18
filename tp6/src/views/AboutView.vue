@@ -1,9 +1,15 @@
 <template>
-  <div class="about">
-    <h1>About Our Community Forum</h1>
-    <p>This forum is a place for our community to come together, share ideas, and discuss various topics.</p>
-    <h2>Our Mission</h2>
-    <p>To foster a supportive and engaging environment where members can learn from each other and grow together.</p>
+  <div class="max-w-3xl mx-auto py-16 text-center pt-40">
+    <h1 class="text-5xl font-bold text-indigo-600 mb-6">About Our Community Forum</h1>
+    <p class="text-lg text-gray-600 mb-8">
+      This forum is a place for our community to come together, share ideas, and discuss various topics.
+    </p>
+
+    <h2 class="text-3xl font-semibold text-gray-800 mb-4">Our Mission</h2>
+    <p class="text-lg text-gray-600">
+      To foster a supportive and engaging environment where members can learn from each other and grow together.
+    </p>
+
     <!-- Add more content about your forum, its rules, or its history -->
   </div>
 </template>
@@ -14,15 +20,3 @@ export default {
   // Add any necessary component logic here
 }
 </script>
-
-<style scoped>
-.about {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-h1, h2 {
-  color: #2c3e50;
-}
-</style>
